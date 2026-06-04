@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { Search, Loader2, Check, ShieldAlert, Award, RefreshCw, Users, ChevronDown } from 'lucide-react';
+import { useAlert } from './ui/AlertContext';
 
 const TEAM_ISO_CODES = {
   'México': 'mx', 'Estados Unidos': 'us', 'Canadá': 'ca', 'Argentina': 'ar', 'Brasil': 'br',
@@ -245,6 +246,7 @@ function TeamSelector({ value, onChange, placeholder = 'Seleccionar equipo...', 
 }
 
 export default function AdminConsole({ onProfileUpdate }) {
+  const { showAlert, showConfirm } = useAlert();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -311,7 +313,7 @@ export default function AdminConsole({ onProfileUpdate }) {
     const awayVal = editedScores[matchId]?.away;
 
     if (homeVal === '' || awayVal === '') {
-      alert('Por favor ingresa ambos marcadores antes de finalizar el partido.');
+      showAlert('Por favor ingresa ambos marcadores antes de finalizar el partido.', 'Atención', 'warning');
       return;
     }
 
@@ -337,16 +339,15 @@ export default function AdminConsole({ onProfileUpdate }) {
       }, 3000);
     } catch (err) {
       console.error('Error al finalizar partido:', err);
-      alert(`Error al finalizar partido: ${err.message}`);
+      showAlert(`Error al finalizar partido: ${err.message}`, 'Error', 'error');
     } finally {
       setUpdatingIds(prev => ({ ...prev, [matchId]: false }));
     }
   };
 
-  const handleResetMatch = async (matchId) => {
-    if (!window.confirm('¿Restablecer este partido? El estado volverá a "Programado".')) return;
-
-    setUpdatingIds(prev => ({ ...prev, [matchId]: true }));
+  const handleResetMatch = (matchId) => {
+    showConfirm('¿Restablecer este partido? El estado volverá a "Programado".', async () => {
+      setUpdatingIds(prev => ({ ...prev, [matchId]: true }));
 
     try {
       const { error } = await supabase
@@ -360,12 +361,13 @@ export default function AdminConsole({ onProfileUpdate }) {
         ...m, home_score: null, away_score: null, status: 'scheduled'
       } : m));
       setEditedScores(prev => ({ ...prev, [matchId]: { home: '', away: '' } }));
-      if (onProfileUpdate) onProfileUpdate();
-    } catch (err) {
-      console.error('Error al restablecer partido:', err);
-    } finally {
-      setUpdatingIds(prev => ({ ...prev, [matchId]: false }));
-    }
+        if (onProfileUpdate) onProfileUpdate();
+      } catch (err) {
+        console.error('Error al restablecer partido:', err);
+      } finally {
+        setUpdatingIds(prev => ({ ...prev, [matchId]: false }));
+      }
+    });
   };
 
   // Save updated team names for a knockout match
@@ -398,27 +400,26 @@ export default function AdminConsole({ onProfileUpdate }) {
       }, 3000);
     } catch (err) {
       console.error('Error al guardar equipos:', err);
-      alert(`Error al guardar: ${err.message}`);
+      showAlert(`Error al guardar: ${err.message}`, 'Error', 'error');
     } finally {
       setSavingTeamIds(prev => ({ ...prev, [matchId]: false }));
     }
   };
 
   // Reset team names back to the original seed placeholders (hardcoded constant)
-  const handleResetTeams = async (matchId) => {
+  const handleResetTeams = (matchId) => {
     const match = matches.find(m => m.id === matchId);
     if (!match) return;
 
     const orig = SEED_PLACEHOLDERS[match.match_number];
     if (!orig) {
-      alert('No se encontró el placeholder original para este partido.');
+      showAlert('No se encontró el placeholder original para este partido.', 'Error', 'error');
       return;
     }
 
     const confirmMsg = `¿Restablecer los equipos a los valores originales del fixture?\n\nLocal: "${orig.home}"\nVisitante: "${orig.away}"`;
-    if (!window.confirm(confirmMsg)) return;
-
-    setResetTeamIds(prev => ({ ...prev, [matchId]: true }));
+    showConfirm(confirmMsg, async () => {
+      setResetTeamIds(prev => ({ ...prev, [matchId]: true }));
 
     try {
       const { error } = await supabase
@@ -428,16 +429,17 @@ export default function AdminConsole({ onProfileUpdate }) {
 
       if (error) throw error;
 
-      setMatches(prev => prev.map(m => m.id === matchId ? {
-        ...m, home_team: orig.home, away_team: orig.away
-      } : m));
-      setEditedTeams(prev => ({ ...prev, [matchId]: { home: orig.home, away: orig.away } }));
-    } catch (err) {
-      console.error('Error al restablecer equipos:', err);
-      alert(`Error al restablecer: ${err.message}`);
-    } finally {
-      setResetTeamIds(prev => ({ ...prev, [matchId]: false }));
-    }
+        setMatches(prev => prev.map(m => m.id === matchId ? {
+          ...m, home_team: orig.home, away_team: orig.away
+        } : m));
+        setEditedTeams(prev => ({ ...prev, [matchId]: { home: orig.home, away: orig.away } }));
+      } catch (err) {
+        console.error('Error al restablecer equipos:', err);
+        showAlert(`Error al restablecer: ${err.message}`, 'Error', 'error');
+      } finally {
+        setResetTeamIds(prev => ({ ...prev, [matchId]: false }));
+      }
+    });
   };
 
   const belongsToTab = (stage, tab) => {

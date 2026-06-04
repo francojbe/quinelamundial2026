@@ -4,6 +4,7 @@ import Auth, { JerseySVG } from './components/Auth';
 import MatchCenter from './components/MatchCenter';
 import Leaderboard from './components/Leaderboard';
 import AdminConsole from './components/AdminConsole';
+import { useAlert } from './components/ui/AlertContext';
 import { Trophy, Calendar, ShieldAlert, User, LogOut, Loader2, Award, Star, Zap, Menu, X } from 'lucide-react';
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [currentTab, setCurrentTab] = useState('matches'); // 'matches' | 'leaderboard' | 'admin' | 'profile'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { showConfirm } = useAlert();
 
   // Fetch profile when tab changes to keep scores/stats in sync
   useEffect(() => {
@@ -87,10 +89,10 @@ export default function App() {
     }
   };
 
-  const handleSignOut = async () => {
-    if (window.confirm('¿Seguro que quieres cerrar sesión?')) {
+  const handleSignOut = () => {
+    showConfirm('¿Seguro que quieres cerrar sesión?', async () => {
       await supabase.auth.signOut();
-    }
+    }, 'Cerrar Sesión', 'warning');
   };
 
   if (loadingAuth) {
