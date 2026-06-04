@@ -273,7 +273,7 @@ export default function AdminConsole({ onProfileUpdate }) {
       const { data, error } = await supabase
         .from('wc2026_matches')
         .select('*')
-        .order('match_number', { ascending: true });
+        .order('date_time', { ascending: true });
 
       if (error) throw error;
 

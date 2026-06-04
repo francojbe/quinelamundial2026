@@ -72,7 +72,7 @@ export default function MatchCenter({ user }) {
       const { data: matchesData, error: matchesError } = await supabase
         .from('wc2026_matches')
         .select('*')
-        .order('match_number', { ascending: true });
+        .order('date_time', { ascending: true });
 
       if (matchesError) throw matchesError;
 
