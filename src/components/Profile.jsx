@@ -1,0 +1,227 @@
+import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
+import { JerseySVG } from './Auth';
+import { Zap, Award, Star, LogOut, Edit2, Save, X, Loader2 } from 'lucide-react';
+import { useAlert } from './ui/AlertContext';
+
+const COLORS = [
+  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', 
+  '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#f43f5e'
+];
+
+const TEAMS = [
+  'México', 'Estados Unidos', 'Canadá', 'Argentina', 'Brasil', 
+  'Francia', 'Inglaterra', 'España', 'Alemania', 'Países Bajos',
+  'Portugal', 'Uruguay', 'Croacia', 'Senegal', 'Japón', 'Otro'
+];
+
+export default function Profile({ profile, onProfileUpdate, onSignOut }) {
+  const { showAlert } = useAlert();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const [editForm, setEditForm] = useState({
+    username: profile.username || '',
+    favorite_team: profile.favorite_team || 'México',
+    color: profile.avatar_config?.color || '#ef4444',
+    jersey: profile.avatar_config?.jersey || 10
+  });
+
+  const handleEditChange = (field, value) => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    if (editForm.username.trim().length < 3) {
+      showAlert('El nombre de usuario debe tener al menos 3 caracteres.', 'Atención', 'warning');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('wc2026_profiles')
+        .update({
+          username: editForm.username.trim(),
+          favorite_team: editForm.favorite_team,
+          avatar_config: {
+            color: editForm.color,
+            jersey: parseInt(editForm.jersey) || 10
+          }
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+      
+      showAlert('Perfil actualizado correctamente.', '¡Éxito!', 'success');
+      setIsEditing(false);
+      if (onProfileUpdate) onProfileUpdate();
+    } catch (err) {
+      console.error('Error actualizando perfil:', err);
+      showAlert(`No se pudo actualizar el perfil: ${err.message}`, 'Error', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset to original values
+    setEditForm({
+      username: profile.username || '',
+      favorite_team: profile.favorite_team || 'México',
+      color: profile.avatar_config?.color || '#ef4444',
+      jersey: profile.avatar_config?.jersey || 10
+    });
+    setIsEditing(false);
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1 className="page-title">Mi Perfil</h1>
+        <p className="page-subtitle">Visualiza tus estadísticas generales y gestiona tu cuenta.</p>
+      </div>
+
+      <div className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '600px', margin: '0 auto', position: 'relative' }}>
+        
+        {/* Toggle Edit Button */}
+        {!isEditing && (
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="btn-secondary"
+            style={{ position: 'absolute', top: '24px', right: '24px', padding: '8px 16px', display: 'flex', gap: '6px' }}
+          >
+            <Edit2 size={16} />
+            Editar
+          </button>
+        )}
+
+        <div style={{ width: '120px', height: '120px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }}>
+          <JerseySVG 
+            color={isEditing ? editForm.color : (profile.avatar_config?.color || '#ef4444')} 
+            number={isEditing ? editForm.jersey : (profile.avatar_config?.jersey || 10)} 
+          />
+        </div>
+
+        {!isEditing ? (
+          // VIEW MODE
+          <>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.8rem', marginBottom: '4px', fontFamily: 'var(--font-title)' }}>{profile.username}</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Hincha de: <b style={{ color: 'var(--text-primary)' }}>{profile.favorite_team}</b></p>
+            </div>
+
+            {/* Stats Panel */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', width: '100%', marginTop: '12px' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <Zap size={20} style={{ color: 'var(--accent-green)', margin: '0 auto 8px' }} />
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.total_points}</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Puntos</div>
+              </div>
+
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <Award size={20} style={{ color: 'var(--accent-gold)', margin: '0 auto 8px' }} />
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.perfect_hits}</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Aciertos 3P</div>
+              </div>
+
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <Star size={20} style={{ color: 'var(--accent-blue)', margin: '0 auto 8px' }} />
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.correct_results}</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Resultados 1P</div>
+              </div>
+            </div>
+
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              <button 
+                onClick={onSignOut} 
+                className="btn-secondary" 
+                style={{ width: '100%', display: 'flex', gap: '8px', justifyContent: 'center', color: 'var(--accent-red)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+              >
+                <LogOut size={18} />
+                Cerrar Sesión
+              </button>
+            </div>
+          </>
+        ) : (
+          // EDIT MODE
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="input-group">
+              <label>Nombre de Usuario</label>
+              <input 
+                type="text" 
+                placeholder="Tu apodo"
+                value={editForm.username}
+                onChange={(e) => handleEditChange('username', e.target.value)}
+                maxLength={20}
+              />
+            </div>
+            
+            <div className="input-group">
+              <label>Equipo Favorito</label>
+              <select 
+                value={editForm.favorite_team} 
+                onChange={(e) => handleEditChange('favorite_team', e.target.value)}
+              >
+                {TEAMS.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label>Color de Camiseta</label>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                {COLORS.map(c => (
+                  <button 
+                    key={c}
+                    onClick={() => handleEditChange('color', c)}
+                    style={{ 
+                      width: '32px', height: '32px', borderRadius: '50%', background: c, 
+                      border: editForm.color === c ? '3px solid white' : 'none',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      boxShadow: editForm.color === c ? '0 0 10px rgba(255,255,255,0.5)' : 'none'
+                    }}
+                    type="button"
+                    aria-label={`Seleccionar color ${c}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>Número (1-99)</label>
+              <input 
+                type="number" 
+                min="1" max="99"
+                value={editForm.jersey}
+                onChange={(e) => handleEditChange('jersey', e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+              <button 
+                className="btn-secondary" 
+                style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '8px' }}
+                onClick={handleCancel}
+                disabled={loading}
+              >
+                <X size={18} />
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary" 
+                style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '8px' }}
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                Guardar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

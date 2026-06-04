@@ -4,6 +4,7 @@ import Auth, { JerseySVG } from './components/Auth';
 import MatchCenter from './components/MatchCenter';
 import Leaderboard from './components/Leaderboard';
 import AdminConsole from './components/AdminConsole';
+import Profile from './components/Profile';
 import { useAlert } from './components/ui/AlertContext';
 import { Trophy, Calendar, ShieldAlert, User, LogOut, Loader2, Award, Star, Zap, Menu, X } from 'lucide-react';
 
@@ -290,59 +291,11 @@ export default function App() {
         {currentTab === 'leaderboard' && <Leaderboard currentUser={profile} />}
         {currentTab === 'admin' && profile?.is_admin && <AdminConsole onProfileUpdate={refreshProfile} />}
         {currentTab === 'profile' && (
-          <div>
-            <div className="page-header">
-              <h1 className="page-title">Mi Perfil</h1>
-              <p className="page-subtitle">Visualiza tus estadísticas generales y gestiona tu cuenta.</p>
-            </div>
-
-            {/* Profile Detail Dashboard card */}
-            <div className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '600px', margin: '0 auto' }}>
-              <div style={{ width: '120px', height: '120px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))' }}>
-                <JerseySVG 
-                  color={profile.avatar_config?.color || '#ef4444'} 
-                  number={profile.avatar_config?.jersey || 10} 
-                />
-              </div>
-
-              <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.8rem', marginBottom: '4px', fontFamily: 'var(--font-title)' }}>{profile.username}</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Hincha de: <b>{profile.favorite_team}</b></p>
-              </div>
-
-              {/* Stats Panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', width: '100%', marginTop: '12px' }}>
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                  <Zap size={20} style={{ color: 'var(--accent-green)', margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.total_points}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Puntos</div>
-                </div>
-
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                  <Award size={20} style={{ color: 'var(--accent-gold)', margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.perfect_hits}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Aciertos 3P</div>
-                </div>
-
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                  <Star size={20} style={{ color: 'var(--accent-blue)', margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '1.4rem', fontWeight: '800', fontFamily: 'var(--font-title)' }}>{profile.correct_results}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: '500', textTransform: 'uppercase', marginTop: '2px' }}>Resultados 1P</div>
-                </div>
-              </div>
-
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                <button 
-                  onClick={handleSignOut} 
-                  className="btn-secondary" 
-                  style={{ width: '100%', display: 'flex', gap: '8px', justifyContent: 'center', color: 'var(--accent-red)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                >
-                  <LogOut size={18} />
-                  Cerrar Sesión
-                </button>
-              </div>
-            </div>
-          </div>
+          <Profile 
+            profile={profile} 
+            onProfileUpdate={refreshProfile} 
+            onSignOut={handleSignOut} 
+          />
         )}
       </main>
     </div>
