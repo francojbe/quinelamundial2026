@@ -11,7 +11,7 @@ const COLORS = [
 
 const TEAMS = [
   'México', 'Estados Unidos', 'Canadá', 'Argentina', 'Brasil', 
-  'Francia', 'Inglaterra', 'España', 'Alemania', 'Países Bajos',
+  'Francia', 'Inglaterra', 'España', 'Alemania', 'Italia', 'Países Bajos',
   'Portugal', 'Uruguay', 'Croacia', 'Senegal', 'Japón', 'Otro'
 ];
 
