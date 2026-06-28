@@ -98,6 +98,19 @@ export default function MatchCenter({ user }) {
       setMatches(matchesData);
       setPredictions(predsMap);
       setLocalScores(localInputMap);
+
+      // Determine and set the active tab based on the current stage of the tournament
+      const nextMatch = matchesData.find(m => m.status !== 'finished');
+      if (nextMatch) {
+        const stages = ['Fase de Grupos', 'Dieciseisavos', 'Octavos', 'Cuartos'];
+        let targetTab = 'Fase Final';
+        if (stages.includes(nextMatch.stage)) targetTab = nextMatch.stage;
+        if (nextMatch.stage === 'Dieciseisavos de Final') targetTab = 'Dieciseisavos';
+        if (nextMatch.stage === 'Octavos de Final') targetTab = 'Octavos';
+        if (nextMatch.stage === 'Cuartos de Final') targetTab = 'Cuartos';
+        setActiveTab(targetTab);
+      }
+
     } catch (error) {
       console.error('Error cargando partidos/predicciones:', error);
     } finally {
