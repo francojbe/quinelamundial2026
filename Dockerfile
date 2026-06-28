@@ -24,13 +24,18 @@ FROM nginx:alpine
 # Copiar build al directorio de nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Configurar nginx para SPA (Single Page Application)
+# Configurar nginx para SPA y control de caché
 RUN echo "server { \
     listen 80; \
+    root /usr/share/nginx/html; \
+    index index.html index.htm; \
+    location /assets/ { \
+        expires 1y; \
+        add_header Cache-Control \"public, max-age=31536000, immutable\"; \
+    } \
     location / { \
-        root /usr/share/nginx/html; \
-        index index.html index.htm; \
         try_files \$uri \$uri/ /index.html; \
+        add_header Cache-Control \"no-store, no-cache, must-revalidate\"; \
     } \
 }" > /etc/nginx/conf.d/default.conf
 
