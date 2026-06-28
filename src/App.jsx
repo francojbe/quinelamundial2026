@@ -287,16 +287,18 @@ export default function App() {
 
       {/* Main View Render Area */}
       <main className="main-content">
-        {currentTab === 'matches' && <MatchCenter user={profile} />}
-        {currentTab === 'leaderboard' && <Leaderboard currentUser={profile} />}
-        {currentTab === 'admin' && profile?.is_admin && <AdminConsole onProfileUpdate={refreshProfile} />}
-        {currentTab === 'profile' && (
-          <Profile 
-            profile={profile} 
-            onProfileUpdate={refreshProfile} 
-            onSignOut={handleSignOut} 
-          />
-        )}
+        <div key={currentTab} className="fade-in-tab">
+          {currentTab === 'matches' && <MatchCenter user={profile} />}
+          {currentTab === 'leaderboard' && <Leaderboard currentUser={profile} />}
+          {currentTab === 'admin' && profile?.is_admin && <AdminConsole onProfileUpdate={refreshProfile} />}
+          {currentTab === 'profile' && (
+            <Profile 
+              profile={profile} 
+              onProfileUpdate={refreshProfile} 
+              onSignOut={handleSignOut} 
+            />
+          )}
+        </div>
       </main>
     </div>
   );

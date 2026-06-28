@@ -129,6 +129,24 @@ export default function MatchCenter({ user }) {
     }
   };
 
+  const adjustScore = (matchId, side, delta) => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match || new Date() >= new Date(match.date_time)) return;
+    
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(10);
+    }
+
+    const currentLocal = localScores[matchId]?.[side] ?? '';
+    let currentVal = currentLocal === '' ? (delta > 0 ? -1 : 0) : parseInt(currentLocal);
+    
+    let newVal = currentVal + delta;
+    if (newVal < 0) newVal = 0;
+    if (newVal > 99) newVal = 99;
+    
+    handleScoreChange(matchId, side, newVal.toString());
+  };
+
   const triggerAutoUpsert = (matchId, homeScore, awayScore) => {
     // Clear existing timeout for this match
     if (saveTimeouts.current[matchId]) {
@@ -199,6 +217,34 @@ export default function MatchCenter({ user }) {
 
       return matchStageMatches && searchMatches;
     });
+  };
+
+  // Auto-scroll to first unfinished match
+  const scrollToNextMatch = () => {
+    const nextMatch = matches.find(m => m.status !== 'finished' && new Date() < new Date(m.date_time));
+    if (nextMatch) {
+      const el = document.getElementById(`match-${nextMatch.id}`);
+      if (el) {
+        // Find which tab it belongs to and switch to it first if needed
+        const stages = ['Fase de Grupos', 'Dieciseisavos', 'Octavos', 'Cuartos'];
+        let targetTab = 'Fase Final';
+        if (stages.includes(nextMatch.stage)) targetTab = nextMatch.stage;
+        if (nextMatch.stage === 'Dieciseisavos de Final') targetTab = 'Dieciseisavos';
+        if (nextMatch.stage === 'Octavos de Final') targetTab = 'Octavos';
+        if (nextMatch.stage === 'Cuartos de Final') targetTab = 'Cuartos';
+        
+        if (activeTab !== targetTab) {
+           setActiveTab(targetTab);
+           // Need a tiny timeout for DOM to render the new tab's items before scrolling
+           setTimeout(() => {
+             const newEl = document.getElementById(`match-${nextMatch.id}`);
+             if (newEl) newEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+           }, 100);
+        } else {
+           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
   };
 
   // Progress metrics
@@ -301,9 +347,17 @@ export default function MatchCenter({ user }) {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ position: 'relative' }}>
         <h1 className="page-title">Centro de Partidos</h1>
         <p className="page-subtitle">Registra tus pronósticos antes del pitazo inicial. Se guardan automáticamente.</p>
+        
+        <button 
+          onClick={scrollToNextMatch}
+          className="btn-primary"
+          style={{ position: 'absolute', top: 0, right: 0, padding: '8px 12px', fontSize: '0.85rem' }}
+        >
+          <Calendar size={14} /> Ir al Actual
+        </button>
       </div>
 
       {/* Favorite Team Banner */}
@@ -369,13 +423,20 @@ export default function MatchCenter({ user }) {
             const matchTime = new Date(match.date_time);
             const hasStarted = new Date() >= matchTime;
             const isFinished = match.status === 'finished';
+            const isMissing = !hasStarted && (localHome === '' || localAway === '');
 
             const savingStatus = savingStates[match.id];
+            
+            let cardStateClass = '';
+            if (hasStarted) cardStateClass = 'match-started';
+            else if (savingStatus === 'saved') cardStateClass = 'match-saved-glow';
+            else if (isMissing) cardStateClass = 'match-incomplete';
 
             return (
-              <div key={match.id} className="glass-card match-card" style={{
-                borderColor: hasStarted ? 'rgba(255,255,255,0.03)' : (savingStatus === 'saved' ? 'var(--border-glass-glow)' : 'var(--border-glass)'),
-                opacity: hasStarted ? 0.9 : 1
+              <div key={match.id} id={`match-${match.id}`} className={`glass-card match-card ${cardStateClass}`} style={{
+                borderColor: hasStarted ? 'rgba(255,255,255,0.03)' : (savingStatus === 'saved' ? 'var(--accent-green)' : (isMissing ? 'var(--accent-gold)' : 'var(--border-glass)')),
+                opacity: hasStarted ? 0.9 : 1,
+                transition: 'all 0.3s ease'
               }}>
                 {/* Match Header */}
                 <div className="match-header">
@@ -400,27 +461,45 @@ export default function MatchCenter({ user }) {
 
                   {/* Score Prediction Inputs / Live Score */}
                   <div className="score-inputs-container">
-                    <input
-                      type="text"
-                      className="score-input"
-                      maxLength="2"
-                      inputMode="numeric"
-                      value={localHome}
-                      onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
-                      disabled={hasStarted}
-                      placeholder={hasStarted ? "-" : "?"}
-                    />
+                    <div className="stepper-wrapper">
+                      {!hasStarted && (
+                        <button className="stepper-btn" onClick={() => adjustScore(match.id, 'home', -1)} disabled={hasStarted}>-</button>
+                      )}
+                      <input
+                        type="text"
+                        className="score-input"
+                        maxLength="2"
+                        inputMode="numeric"
+                        value={localHome}
+                        onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                        disabled={hasStarted}
+                        placeholder={hasStarted ? "-" : "?"}
+                      />
+                      {!hasStarted && (
+                        <button className="stepper-btn" onClick={() => adjustScore(match.id, 'home', 1)} disabled={hasStarted}>+</button>
+                      )}
+                    </div>
+                    
                     <span className="score-separator">:</span>
-                    <input
-                      type="text"
-                      className="score-input"
-                      maxLength="2"
-                      inputMode="numeric"
-                      value={localAway}
-                      onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
-                      disabled={hasStarted}
-                      placeholder={hasStarted ? "-" : "?"}
-                    />
+                    
+                    <div className="stepper-wrapper">
+                      {!hasStarted && (
+                        <button className="stepper-btn" onClick={() => adjustScore(match.id, 'away', -1)} disabled={hasStarted}>-</button>
+                      )}
+                      <input
+                        type="text"
+                        className="score-input"
+                        maxLength="2"
+                        inputMode="numeric"
+                        value={localAway}
+                        onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                        disabled={hasStarted}
+                        placeholder={hasStarted ? "-" : "?"}
+                      />
+                      {!hasStarted && (
+                        <button className="stepper-btn" onClick={() => adjustScore(match.id, 'away', 1)} disabled={hasStarted}>+</button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Away Team */}

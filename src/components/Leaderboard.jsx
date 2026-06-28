@@ -130,11 +130,11 @@ export default function Leaderboard({ currentUser }) {
             <table className="leaderboard-table">
               <thead>
                 <tr>
-                  <th className="leaderboard-th" style={{ width: '48px', textAlign: 'center' }}>Pos</th>
-                  <th className="leaderboard-th">Competidor</th>
-                  <th className="leaderboard-th hide-mobile" style={{ textAlign: 'center' }}>🎯 Exactos</th>
-                  <th className="leaderboard-th hide-mobile" style={{ textAlign: 'center' }}>⚽ Resultados</th>
-                  <th className="leaderboard-th" style={{ textAlign: 'center', minWidth: '80px' }}>Puntos</th>
+                  <th className="leaderboard-th sticky" style={{ width: '48px', textAlign: 'center' }}>Pos</th>
+                  <th className="leaderboard-th sticky">Competidor</th>
+                  <th className="leaderboard-th sticky hide-mobile" style={{ textAlign: 'center' }}>🎯 Exactos</th>
+                  <th className="leaderboard-th sticky hide-mobile" style={{ textAlign: 'center' }}>⚽ Resultados</th>
+                  <th className="leaderboard-th sticky" style={{ textAlign: 'center', minWidth: '80px' }}>Puntos</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,10 +142,15 @@ export default function Leaderboard({ currentUser }) {
                   const isMe = currentUser && currentUser.id === profile.id;
                   const avatar = profile.avatar_config || { color: '#22c55e', jersey: 10 };
                   
+                  let rankClass = '';
+                  if (index === 0) rankClass = 'rank-gold';
+                  else if (index === 1) rankClass = 'rank-silver';
+                  else if (index === 2) rankClass = 'rank-bronze';
+
                   return (
                     <tr 
                       key={profile.id} 
-                      className="leaderboard-row"
+                      className={`leaderboard-row ${rankClass}`}
                       onClick={() => handleRowClick(profile)}
                       style={{
                         backgroundColor: isMe ? 'var(--accent-green-glow)' : 'transparent',
