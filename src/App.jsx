@@ -301,53 +301,40 @@ export default function App() {
         </div>
       </main>
 
-      {/* Floating Clear Cache Button */}
-      <button
-        onClick={() => {
-          if ('caches' in window) {
-            caches.keys().then((names) => {
-              for (let name of names) {
-                caches.delete(name);
-              }
-            });
-          }
-          window.location.reload(true);
-        }}
-        title="Forzar actualización (Limpiar Caché)"
-        style={{
-          position: 'fixed',
-          bottom: '100px', /* Above mobile nav */
-          right: '20px',
-          width: '46px',
-          height: '46px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--border-glass)',
-          boxShadow: 'var(--shadow-premium)',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 1000,
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent-green)';
-          e.currentTarget.style.borderColor = 'var(--accent-green)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-secondary)';
-          e.currentTarget.style.borderColor = 'var(--border-glass)';
-        }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-          <path d="M3 3v5h5"></path>
-          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
-          <path d="M16 21v-5h5"></path>
-        </svg>
-      </button>
+      {/* Force Cache Clear Overlay */}
+      {!localStorage.getItem('force_cache_clear_v1') && (
+        <div className="modal-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+          <div className="glass-card modal-content" style={{ textAlign: 'center', padding: '32px', maxWidth: '360px', width: '90%', margin: '0 auto', boxShadow: '0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px var(--accent-green-glow)' }}>
+            <h2 style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '1.4rem' }}>✨ ¡Nueva Actualización!</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.5', fontSize: '0.95rem' }}>
+              Hemos mejorado la aplicación con un nuevo diseño y marcadores más rápidos. Por favor, actualiza para aplicar los cambios.
+            </p>
+            <button
+              className="btn-primary"
+              style={{ padding: '12px 24px', fontSize: '1rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              onClick={() => {
+                if ('caches' in window) {
+                  caches.keys().then((names) => {
+                    for (let name of names) {
+                      caches.delete(name);
+                    }
+                  });
+                }
+                localStorage.setItem('force_cache_clear_v1', 'true');
+                window.location.reload(true);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                <path d="M16 21v-5h5"></path>
+              </svg>
+              Aplicar Cambios Ahora
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
